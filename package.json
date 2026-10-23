@@ -4,6 +4,7 @@
   "description": "Mobile-first, Hindi-first rewards PWA for farmers and agricultural partners",
   "type": "module",
   "scripts": {
+    "build": "echo 'Static build ready'",
     "start": "node server.mjs",
     "dev": "node server.mjs",
     "lint": "node --check app.js admin.js admin-settings.js admin-billing.js sw.js server.mjs",
