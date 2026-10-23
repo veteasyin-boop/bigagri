@@ -182,6 +182,9 @@ const MOCK_ADMIN_DASHBOARD = {
       partner_name: "Rameshwar Singh",
       partner_phone: "+919876543210",
       status: "reserved",
+      payout_status: "pending",
+      payout_vpa: "rameshwar@upi",
+      payout_utr: null,
       reward_is_demo: false,
       created_at: "2026-10-23T11:45:00Z",
     },
@@ -192,6 +195,9 @@ const MOCK_ADMIN_DASHBOARD = {
       partner_name: "Kisan Krishi Seva Kendra",
       partner_phone: "+919876512345",
       status: "approved",
+      payout_status: "paid",
+      payout_vpa: "kisan@okicici",
+      payout_utr: "CMS293847291048",
       reward_is_demo: false,
       created_at: "2026-10-23T09:12:00Z",
     },
@@ -366,6 +372,456 @@ const MOCK_ADMIN_DASHBOARD = {
   ],
 };
 
+const MOCK_PUNJAB_DASHBOARD = {
+  ok: true,
+  tenant: {
+    id: "d0000000-0000-4000-8000-000000000002",
+    name: "Punjab Kisan Agro Bio-Tech",
+    slug: "punjab-kisan-agro",
+  },
+  role: "brand_admin",
+  capabilities: {
+    product_management: true,
+    audit_log_viewer: true,
+  },
+  metrics: {
+    partners_total: 24,
+    partners_pending: 1,
+    campaigns_active: 1,
+    products_active: 3,
+    qr_codes_issued_total: 6200,
+    redemptions_open: 2,
+    point_value_minor_units: 100,
+    point_value_currency: "INR",
+  },
+  partners: [
+    {
+      id: "p-pb-101",
+      display_name: "Gurpreet Dhillon (Kisan Partner)",
+      phone_e164: "+919812345678",
+      role: "farmer",
+      verification_status: "verified",
+      created_at: "2026-10-21T09:00:00Z",
+    },
+    {
+      id: "p-pb-102",
+      display_name: "Malwa Kisan Seva Kendra",
+      phone_e164: "+919876599901",
+      role: "retailer",
+      verification_status: "verified",
+      created_at: "2026-10-22T14:15:00Z",
+    },
+    {
+      id: "p-pb-103",
+      display_name: "Amritsar Agro Inputs & Seeds",
+      phone_e164: "+919876599902",
+      role: "distributor",
+      verification_status: "pending",
+      created_at: "2026-10-23T10:30:00Z",
+    },
+    {
+      id: "p-pb-104",
+      display_name: "Harvinder Singh Sandhu",
+      phone_e164: "+919876599903",
+      role: "farmer",
+      verification_status: "verified",
+      created_at: "2026-10-20T08:00:00Z",
+    },
+  ],
+  products: [
+    {
+      id: "prod-pb-001",
+      sku: "BASMATI-GOLD-25KG",
+      name: "Basmati Gold Supreme Seed 25kg",
+      pack_size: "25 kg",
+      active: true,
+    },
+    {
+      id: "prod-pb-002",
+      sku: "SARSON-PIONEER-5KG",
+      name: "Mustard Sarson Pioneer Seed 5kg",
+      pack_size: "5 kg",
+      active: true,
+    },
+    {
+      id: "prod-pb-003",
+      sku: "ZINC-CHELATE-1L",
+      name: "Chelated Zinc Micro-Nutrient 1L",
+      pack_size: "1 L",
+      active: true,
+    },
+  ],
+  campaigns: [
+    {
+      id: "camp-pb-01",
+      name: "Malwa Wheat & Mustard Loyalty Boost 2026",
+      status: "active",
+      starts_at: "2026-10-01T00:00:00Z",
+      ends_at: "2026-12-31T23:59:59Z",
+      budget_minor_units: 2500000,
+      currency: "INR",
+      rules: { demo: false },
+    },
+  ],
+  batches: [
+    {
+      id: "batch-pb-8801",
+      requested_count: 500,
+      points_value: 50,
+      status: "issued",
+      packaging_level: "carton",
+      destination_state: "Punjab",
+      retailer_margin_inr: 50,
+    },
+    {
+      id: "batch-pb-8802",
+      requested_count: 250,
+      points_value: 100,
+      status: "issued",
+      packaging_level: "unit",
+      destination_state: "Punjab",
+      retailer_margin_inr: 0,
+    },
+  ],
+  redemptions: [
+    {
+      id: "red-pb-01",
+      reward_name: "Battery Spray Pump 16L",
+      points_cost: 500,
+      partner_name: "Gurpreet Dhillon",
+      partner_phone: "+919812345678",
+      status: "fulfilled",
+      payout_status: "paid",
+      payout_vpa: "gurpreet@okhdfcbank",
+      payout_utr: "PUNB0293847192",
+      reward_is_demo: false,
+      created_at: "2026-10-23T11:45:00Z",
+    },
+    {
+      id: "red-pb-02",
+      reward_name: "High-Pressure Brass Nozzle Kit",
+      points_cost: 150,
+      partner_name: "Malwa Kisan Seva Kendra",
+      partner_phone: "+919876599901",
+      status: "approved",
+      payout_status: "pending",
+      payout_vpa: "malwa@upi",
+      payout_utr: null,
+      reward_is_demo: false,
+      created_at: "2026-10-23T09:12:00Z",
+    },
+  ],
+  audit_logs: [
+    {
+      action: "campaign_activated",
+      entity_type: "campaign",
+      entity_id: "camp-pb-01",
+      actor_user_id: "admin-punjab",
+      reason: "Approved Malwa seasonal loyalty campaign",
+      created_at: "2026-10-23T08:00:00Z",
+    },
+    {
+      action: "partner_verified",
+      entity_type: "partner",
+      entity_id: "p-pb-101",
+      actor_user_id: "admin-punjab",
+      reason: "Verified Punjab Kisan Card identity",
+      created_at: "2026-10-22T11:00:00Z",
+    },
+  ],
+  pagination: {
+    partners: { page: 0, page_size: 20, total: 4 },
+    products: { page: 0, page_size: 20, total: 3 },
+    campaigns: { page: 0, page_size: 20, total: 1 },
+    batches: { page: 0, page_size: 20, total: 2 },
+    redemptions: { page: 0, page_size: 20, total: 2 },
+    audit: { page: 0, page_size: 20, total: 2 },
+  },
+  team: [
+    {
+      id: "tm-pb-01",
+      email: "admin@punjabagro.com",
+      display_name: "Punjab Operations Lead",
+      role: "brand_admin",
+      status: "active",
+      last_active: "2026-10-23T12:00:00Z",
+    },
+    {
+      id: "tm-pb-02",
+      email: "field.malwa@punjabagro.com",
+      display_name: "Malwa Regional Field Exec",
+      role: "field_executive",
+      status: "active",
+      last_active: "2026-10-23T10:15:00Z",
+    },
+  ],
+  traceability: [
+    {
+      id: "tr-pb-001",
+      batch_id: "batch-pb-8801",
+      sku: "BASMATI-GOLD-25KG",
+      stage: "farmer_claimed",
+      stage_label: "Farmer Claimed",
+      current_location: "Ludhiana, Punjab",
+      allocated_state: "Punjab",
+      packaging_level: "Shipper Bag (25kg)",
+      transit_status: "Verified Genuine",
+      retailer_trade_status: "Kendra Trade Margin Credited (₹50)",
+      anomaly: null,
+      updated_at: "2026-10-23T11:45:00Z",
+    },
+    {
+      id: "tr-pb-002",
+      batch_id: "batch-pb-8801",
+      sku: "SARSON-PIONEER-5KG",
+      stage: "retailer_received",
+      stage_label: "Retailer Received",
+      current_location: "Amritsar Hub, Punjab",
+      allocated_state: "Punjab",
+      packaging_level: "Carton (5 Units)",
+      transit_status: "In Stock at Kendra",
+      retailer_trade_status: "Kendra Trade Margin Claimed",
+      anomaly: null,
+      updated_at: "2026-10-23T10:10:00Z",
+    },
+  ],
+  counterfeit_incidents: [
+    {
+      id: "inc-pb-01",
+      district: "Bhatinda, Punjab",
+      batch_id: "batch-pb-8801",
+      sku: "BASMATI-GOLD-25KG",
+      severity: "high",
+      attempt_count: 8,
+      time_span: "Within last 3 hours",
+      device_fingerprints: 4,
+      ip_asns: ["AS133694 (Airtel 4G)"],
+      status: "active_investigation",
+      recommended_action: "Dispatch Regional FDO & Blacklist Serial Range",
+      created_at: "2026-10-23T12:15:00Z",
+    },
+  ],
+  mes_api_keys: [
+    {
+      id: "key-pb-01",
+      name: "Ludhiana Plant Packaging Line 01 (High-Speed Rotary)",
+      key_prefix: "bg_live_mes_lud01_77a1",
+      permissions: "batches:provision, codes:mint",
+      created_at: "2026-10-15T09:00:00Z",
+      last_used: "18 minutes ago (320 packs minted)",
+      status: "active",
+    },
+  ],
+};
+
+const MOCK_DECCAN_DASHBOARD = {
+  ok: true,
+  tenant: {
+    id: "d0000000-0000-4000-8000-000000000003",
+    name: "Deccan Crop Protection Kendra",
+    slug: "deccan-crop-west",
+  },
+  role: "brand_admin",
+  capabilities: {
+    product_management: true,
+    audit_log_viewer: true,
+  },
+  metrics: {
+    partners_total: 31,
+    partners_pending: 2,
+    campaigns_active: 1,
+    products_active: 3,
+    qr_codes_issued_total: 8900,
+    redemptions_open: 1,
+    point_value_minor_units: 75,
+    point_value_currency: "INR",
+  },
+  partners: [
+    {
+      id: "p-dec-201",
+      display_name: "Santosh Patil (Kisan Partner)",
+      phone_e164: "+919822012345",
+      role: "farmer",
+      verification_status: "verified",
+      created_at: "2026-10-20T10:00:00Z",
+    },
+    {
+      id: "p-dec-202",
+      display_name: "Krishi Vikas Kendra Baramati",
+      phone_e164: "+919822054321",
+      role: "retailer",
+      verification_status: "verified",
+      created_at: "2026-10-21T11:30:00Z",
+    },
+    {
+      id: "p-dec-203",
+      display_name: "Marathwada Seeds Corporation",
+      phone_e164: "+919822098765",
+      role: "distributor",
+      verification_status: "pending",
+      created_at: "2026-10-23T08:45:00Z",
+    },
+    {
+      id: "p-dec-204",
+      display_name: "Anand Gite",
+      phone_e164: "+919822033445",
+      role: "farmer",
+      verification_status: "pending",
+      created_at: "2026-10-23T11:00:00Z",
+    },
+  ],
+  products: [
+    {
+      id: "prod-dec-001",
+      sku: "CANE-ROOT-10KG",
+      name: "Sugarcane Root Growth Granules 10kg",
+      pack_size: "10 kg",
+      active: true,
+    },
+    {
+      id: "prod-dec-002",
+      sku: "COTTON-BOLL-500ML",
+      name: "Cotton Boll Guard Bio-Shield 500ml",
+      pack_size: "500 ml",
+      active: true,
+    },
+    {
+      id: "prod-dec-003",
+      sku: "SOYA-INOC-250ML",
+      name: "Soybean Rhizobium Inoculant 250ml",
+      pack_size: "250 ml",
+      active: true,
+    },
+  ],
+  campaigns: [
+    {
+      id: "camp-dec-01",
+      name: "Vidarbha & Marathwada Kharif Cash-Back",
+      status: "active",
+      starts_at: "2026-10-01T00:00:00Z",
+      ends_at: "2026-12-31T23:59:59Z",
+      budget_minor_units: 3500000,
+      currency: "INR",
+      rules: { demo: false },
+    },
+  ],
+  batches: [
+    {
+      id: "batch-dec-9901",
+      requested_count: 400,
+      points_value: 75,
+      status: "issued",
+      packaging_level: "pallet",
+      destination_state: "Maharashtra",
+      retailer_margin_inr: 40,
+    },
+  ],
+  redemptions: [
+    {
+      id: "red-dec-01",
+      reward_name: "Drip Irrigation Filter Assembly",
+      points_cost: 350,
+      partner_name: "Santosh Patil",
+      partner_phone: "+919822012345",
+      status: "reserved",
+      payout_status: "queued",
+      payout_vpa: "patil@oksbi",
+      payout_utr: null,
+      reward_is_demo: false,
+      created_at: "2026-10-23T10:15:00Z",
+    },
+  ],
+  audit_logs: [
+    {
+      action: "qr_batch_issued",
+      entity_type: "batch",
+      entity_id: "batch-dec-9901",
+      actor_user_id: "admin-deccan",
+      reason: "Shipper pallet provisioned for Western Maharashtra",
+      created_at: "2026-10-22T16:00:00Z",
+    },
+  ],
+  pagination: {
+    partners: { page: 0, page_size: 20, total: 4 },
+    products: { page: 0, page_size: 20, total: 3 },
+    campaigns: { page: 0, page_size: 20, total: 1 },
+    batches: { page: 0, page_size: 20, total: 1 },
+    redemptions: { page: 0, page_size: 20, total: 1 },
+    audit: { page: 0, page_size: 20, total: 1 },
+  },
+  team: [
+    {
+      id: "tm-dec-01",
+      email: "operations@deccancrop.com",
+      display_name: "Western Zone Operations Lead",
+      role: "brand_admin",
+      status: "active",
+      last_active: "2026-10-23T11:20:00Z",
+    },
+    {
+      id: "tm-dec-02",
+      email: "vigilance@deccancrop.com",
+      display_name: "Field Development Officer",
+      role: "field_executive",
+      status: "active",
+      last_active: "2026-10-23T09:40:00Z",
+    },
+  ],
+  traceability: [
+    {
+      id: "tr-dec-001",
+      batch_id: "batch-dec-9901",
+      sku: "CANE-ROOT-10KG",
+      stage: "warehouse_dispatched",
+      stage_label: "Warehouse Dispatched",
+      current_location: "Nagpur Central Logistics",
+      allocated_state: "Maharashtra",
+      packaging_level: "Master Pallet",
+      transit_status: "En Route to Pune Hub",
+      retailer_trade_status: "Pending Retail Arrival",
+      anomaly: null,
+      updated_at: "2026-10-23T09:00:00Z",
+    },
+  ],
+  counterfeit_incidents: [
+    {
+      id: "inc-dec-01",
+      district: "Solapur, Maharashtra",
+      batch_id: "batch-dec-9901",
+      sku: "COTTON-BOLL-500ML",
+      severity: "medium",
+      attempt_count: 3,
+      time_span: "Yesterday afternoon",
+      device_fingerprints: 2,
+      ip_asns: ["AS55836 (Jio Infocomm)"],
+      status: "active_investigation",
+      recommended_action: "Audit Local Agro Kendra Inventory",
+      created_at: "2026-10-22T17:00:00Z",
+    },
+  ],
+  mes_api_keys: [
+    {
+      id: "key-dec-01",
+      name: "Nagpur Seed Processing MES (Master Pallet Line)",
+      key_prefix: "bg_live_mes_nag01_4c28",
+      permissions: "batches:provision, cartons:aggregate, pallets:bind",
+      created_at: "2026-10-01T10:00:00Z",
+      last_used: "Yesterday (25 Pallets bound)",
+      status: "active",
+    },
+  ],
+};
+
+const TENANT_DASHBOARDS = {
+  "growta-rewardloop": MOCK_ADMIN_DASHBOARD,
+  "punjab-kisan-agro": MOCK_PUNJAB_DASHBOARD,
+  "deccan-crop-west": MOCK_DECCAN_DASHBOARD,
+};
+
+function getTenantDashboard(slug) {
+  return TENANT_DASHBOARDS[slug] || MOCK_ADMIN_DASHBOARD;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   let pathname = decodeURIComponent(url.pathname);
@@ -473,8 +929,20 @@ const server = http.createServer(async (req, res) => {
               {
                 id: "d0000000-0000-4000-8000-000000000001",
                 slug: "growta-rewardloop",
-                name: "BigAgri / Growta RewardLoop",
+                name: "BigAgri / Growta National Hub",
                 role: "super_admin",
+              },
+              {
+                id: "d0000000-0000-4000-8000-000000000002",
+                slug: "punjab-kisan-agro",
+                name: "Punjab Kisan Agro Bio-Tech",
+                role: "brand_admin",
+              },
+              {
+                id: "d0000000-0000-4000-8000-000000000003",
+                slug: "deccan-crop-west",
+                name: "Deccan Crop Protection Kendra",
+                role: "brand_admin",
               },
             ],
           })
@@ -483,20 +951,43 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (bodyJson.action === "admin_dashboard") {
+        const tenantSlug = bodyJson.tenant_slug || "growta-rewardloop";
+        const dash = getTenantDashboard(tenantSlug);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
-        res.end(JSON.stringify(MOCK_ADMIN_DASHBOARD));
+        res.end(JSON.stringify(dash));
         return;
       }
 
       if (bodyJson.action === "admin_audit_logs") {
+        const tenantSlug = bodyJson.tenant_slug || "growta-rewardloop";
+        const dash = getTenantDashboard(tenantSlug);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(
           JSON.stringify({
             ok: true,
-            logs: MOCK_ADMIN_DASHBOARD.audit_logs,
-            pagination: { page: 0, page_size: 20, total: MOCK_ADMIN_DASHBOARD.audit_logs.length },
+            logs: dash.audit_logs || [],
+            pagination: { page: 0, page_size: 20, total: (dash.audit_logs || []).length },
           })
         );
+        return;
+      }
+
+      if (bodyJson.action === "admin_upi_payouts") {
+        const tenantSlug = bodyJson.tenant_slug || "growta-rewardloop";
+        const dash = getTenantDashboard(tenantSlug);
+        const payouts = (dash.redemptions || []).map((r, i) => ({
+          id: "pay-" + (r.id || i),
+          redemption_id: r.id,
+          partner_name: r.partner_name,
+          partner_phone: r.partner_phone,
+          upi_vpa: r.payout_vpa || "kisan@upi",
+          amount_inr: (r.points_cost || 50) / 2,
+          status: r.payout_status || "pending",
+          utr_reference: r.payout_utr || null,
+          created_at: r.created_at || new Date().toISOString(),
+        }));
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true, payouts }));
         return;
       }
 
@@ -507,8 +998,9 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ ok: false, error: "Email and role are required." }));
           return;
         }
-        MOCK_ADMIN_DASHBOARD.team.push({
-          id: "tm-" + (MOCK_ADMIN_DASHBOARD.team.length + 1),
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        dash.team.push({
+          id: "tm-" + (dash.team.length + 1),
           email,
           display_name: email.split("@")[0],
           role,
@@ -522,7 +1014,8 @@ const server = http.createServer(async (req, res) => {
 
       if (bodyJson.action === "revoke_operator") {
         const { operator_id } = bodyJson;
-        MOCK_ADMIN_DASHBOARD.team = MOCK_ADMIN_DASHBOARD.team.filter((t) => t.id !== operator_id);
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        dash.team = dash.team.filter((t) => t.id !== operator_id);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(JSON.stringify({ ok: true }));
         return;
@@ -530,6 +1023,7 @@ const server = http.createServer(async (req, res) => {
 
       if (bodyJson.action === "issue_qr_batch") {
         const { count, points_value, packaging_level, destination_state, retailer_margin_inr } = bodyJson;
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
         const batchId = "batch-" + crypto.randomUUID().slice(0, 8);
         const codes = [];
         const n = Math.min(1000, Math.max(1, Number(count) || 25));
@@ -543,7 +1037,7 @@ const server = http.createServer(async (req, res) => {
             qr_payload: `https://bigagri.vercel.app/?token=${token}`,
           });
         }
-        MOCK_ADMIN_DASHBOARD.batches.unshift({
+        dash.batches.unshift({
           id: batchId,
           requested_count: n,
           points_value: points_value || 10,
@@ -552,6 +1046,7 @@ const server = http.createServer(async (req, res) => {
           destination_state: destination_state || "All-India General",
           retailer_margin_inr: Number(retailer_margin_inr) || 0,
         });
+        dash.metrics.qr_codes_issued_total = (dash.metrics.qr_codes_issued_total || 0) + n;
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(JSON.stringify({ ok: true, batch_id: batchId, codes }));
         return;
@@ -638,10 +1133,11 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (bodyJson.action === "create_mes_key") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
         const name = String(bodyJson.name || "Factory Line Packaging Key");
         const permissions = String(bodyJson.permissions || "batches:provision, codes:mint");
         const newKey = {
-          id: "key-0" + (MOCK_ADMIN_DASHBOARD.mes_api_keys.length + 1),
+          id: "key-0" + (dash.mes_api_keys.length + 1),
           name,
           key_prefix: "bg_live_mes_" + crypto.randomUUID().slice(0, 8),
           permissions,
@@ -649,23 +1145,25 @@ const server = http.createServer(async (req, res) => {
           last_used: "Never",
           status: "active",
         };
-        MOCK_ADMIN_DASHBOARD.mes_api_keys.unshift(newKey);
+        dash.mes_api_keys.unshift(newKey);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(JSON.stringify({ ok: true, key: newKey }));
         return;
       }
 
       if (bodyJson.action === "revoke_mes_key") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
         const keyId = bodyJson.key_id;
-        MOCK_ADMIN_DASHBOARD.mes_api_keys = MOCK_ADMIN_DASHBOARD.mes_api_keys.filter(k => k.id !== keyId);
+        dash.mes_api_keys = dash.mes_api_keys.filter(k => k.id !== keyId);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(JSON.stringify({ ok: true }));
         return;
       }
 
       if (bodyJson.action === "resolve_counterfeit_incident") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
         const incidentId = bodyJson.incident_id;
-        const inc = MOCK_ADMIN_DASHBOARD.counterfeit_incidents.find(i => i.id === incidentId);
+        const inc = dash.counterfeit_incidents.find(i => i.id === incidentId);
         if (inc) {
           inc.status = "contained_blacklisted";
           inc.recommended_action = "Batch Locked & Blacklisted from Replay Claims";
@@ -675,7 +1173,191 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      if (["verify_partner", "create_product", "set_product_status", "set_campaign_status", "create_campaign", "set_point_value", "resolve_redemption", "revoke_qr_batch"].includes(bodyJson.action)) {
+      if (bodyJson.action === "create_product") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const newProd = {
+          id: "prod-" + crypto.randomUUID().slice(0, 8),
+          sku: String(bodyJson.sku || "").toUpperCase(),
+          name: String(bodyJson.name || "New Product"),
+          pack_size: String(bodyJson.pack_size || "1 Unit"),
+          active: true,
+        };
+        dash.products.unshift(newProd);
+        dash.metrics.products_active = dash.products.filter(p => p.active).length;
+        dash.audit_logs.unshift({
+          action: "product_created",
+          entity_type: "product",
+          entity_id: newProd.id,
+          actor_user_id: "admin-system",
+          reason: `Created product ${newProd.sku}`,
+          created_at: new Date().toISOString()
+        });
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true, product_id: newProd.id }));
+        return;
+      }
+
+      if (bodyJson.action === "update_product") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const prod = dash.products.find(p => p.id === bodyJson.product_id);
+        if (prod) {
+          if (bodyJson.name) prod.name = String(bodyJson.name);
+          if (bodyJson.pack_size !== undefined) prod.pack_size = String(bodyJson.pack_size);
+          dash.audit_logs.unshift({
+            action: "product_updated",
+            entity_type: "product",
+            entity_id: prod.id,
+            actor_user_id: "admin-system",
+            reason: `Updated product ${prod.sku}`,
+            created_at: new Date().toISOString()
+          });
+        }
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "set_product_status") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const prod = dash.products.find(p => p.id === bodyJson.product_id);
+        if (prod) {
+          prod.active = Boolean(bodyJson.active);
+          dash.metrics.products_active = dash.products.filter(p => p.active).length;
+          dash.audit_logs.unshift({
+            action: prod.active ? "product_reactivated" : "product_deactivated",
+            entity_type: "product",
+            entity_id: prod.id,
+            actor_user_id: "admin-system",
+            reason: bodyJson.reason || "Status updated by admin",
+            created_at: new Date().toISOString()
+          });
+        }
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "create_campaign") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const newCamp = {
+          id: "camp-" + crypto.randomUUID().slice(0, 8),
+          name: String(bodyJson.name || "Seasonal Campaign"),
+          status: "draft",
+          starts_at: bodyJson.starts_at || null,
+          ends_at: bodyJson.ends_at || null,
+          budget_minor_units: Math.round(Number(bodyJson.budget || 0) * 100),
+          currency: "INR",
+          rules: { demo: false }
+        };
+        dash.campaigns.unshift(newCamp);
+        dash.audit_logs.unshift({
+          action: "campaign_created",
+          entity_type: "campaign",
+          entity_id: newCamp.id,
+          actor_user_id: "admin-system",
+          reason: `Created draft campaign ${newCamp.name}`,
+          created_at: new Date().toISOString()
+        });
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true, campaign_id: newCamp.id }));
+        return;
+      }
+
+      if (bodyJson.action === "set_campaign_status") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const camp = dash.campaigns.find(c => c.id === bodyJson.campaign_id);
+        if (camp) {
+          camp.status = bodyJson.status;
+          dash.metrics.campaigns_active = dash.campaigns.filter(c => c.status === "active").length;
+          dash.audit_logs.unshift({
+            action: "campaign_status_changed",
+            entity_type: "campaign",
+            entity_id: camp.id,
+            actor_user_id: "admin-system",
+            reason: `Campaign status changed to ${camp.status}`,
+            created_at: new Date().toISOString()
+          });
+        }
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "verify_partner") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const part = dash.partners.find(p => p.id === bodyJson.partner_id);
+        if (part) {
+          part.verification_status = bodyJson.status;
+          dash.metrics.partners_pending = dash.partners.filter(p => ["pending", "unverified"].includes(p.verification_status)).length;
+          dash.audit_logs.unshift({
+            action: "partner_verified",
+            entity_type: "partner",
+            entity_id: part.id,
+            actor_user_id: "admin-system",
+            reason: `Partner status set to ${part.verification_status}`,
+            created_at: new Date().toISOString()
+          });
+        }
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "resolve_redemption") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const red = dash.redemptions.find(r => r.id === bodyJson.redemption_id);
+        if (red) {
+          red.status = bodyJson.status;
+          dash.metrics.redemptions_open = dash.redemptions.filter(r => ["reserved", "approved"].includes(r.status)).length;
+          dash.audit_logs.unshift({
+            action: "redemption_resolved",
+            entity_type: "redemption",
+            entity_id: red.id,
+            actor_user_id: "admin-system",
+            reason: `Redemption marked ${red.status}`,
+            created_at: new Date().toISOString()
+          });
+        }
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "set_point_value") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        if (bodyJson.point_value_minor_units) {
+          dash.metrics.point_value_minor_units = Number(bodyJson.point_value_minor_units);
+        }
+        if (bodyJson.point_value_currency) {
+          dash.metrics.point_value_currency = bodyJson.point_value_currency;
+        }
+        dash.audit_logs.unshift({
+          action: "point_value_updated",
+          entity_type: "tenant",
+          entity_id: dash.tenant.id,
+          actor_user_id: "admin-system",
+          reason: `Point valuation set to ${dash.metrics.point_value_minor_units} ${dash.metrics.point_value_currency}`,
+          created_at: new Date().toISOString()
+        });
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (bodyJson.action === "revoke_qr_batch") {
+        const dash = getTenantDashboard(bodyJson.tenant_slug);
+        const b = dash.batches.find(x => x.id === bodyJson.batch_id);
+        if (b) {
+          b.status = "revoked";
+          dash.audit_logs.unshift({
+            action: "batch_revoked",
+            entity_type: "batch",
+            entity_id: b.id,
+            actor_user_id: "admin-system",
+            reason: "Batch revoked by admin",
+            created_at: new Date().toISOString()
+          });
+        }
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
         res.end(JSON.stringify({ ok: true }));
         return;
