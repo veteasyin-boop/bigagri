@@ -172,7 +172,9 @@ Deno.serve(async (req: Request) => {
       sync_lucky_ticket: { limit: 30, windowSeconds: 60 },
       lucky_tickets: { limit: 60, windowSeconds: 60 },
       redeem: { limit: 15, windowSeconds: 60 },
+      upi_payout_status: { limit: 60, windowSeconds: 60 },
       admin_dashboard: { limit: 60, windowSeconds: 60 },
+      admin_upi_payouts: { limit: 30, windowSeconds: 60 },
       verify_partner: { limit: 30, windowSeconds: 60 },
       issue_qr_batch: { limit: 10, windowSeconds: 60 },
       revoke_qr_batch: { limit: 10, windowSeconds: 60 },
@@ -473,16 +475,92 @@ Deno.serve(async (req: Request) => {
         return reply(400, { ok: false, error: "invalid_reward" });
       }
       if (requestKey.length < 8 || requestKey.length > 160) return reply(400, { ok: false, error: "invalid_request_key" });
+
+      const { data: rewardData } = await admin.from("rewards")
+        .select("id, tenant_id, category, points_cost, name")
+        .eq("id", rewardId)
+        .maybeSingle();
+
+      const rawVpa = typeof body.upi_vpa === "string" ? body.upi_vpa.trim() : "";
+      const isUpiReward = rewardData?.category === "cash_upi" || Boolean(rawVpa);
+
+      if (rewardData?.category === "cash_upi") {
+        const vpaRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z][a-zA-Z0-9.\-_]{1,64}$/;
+        if (!rawVpa || !vpaRegex.test(rawVpa)) {
+          return reply(400, { ok: false, error: "invalid_upi_vpa" });
+        }
+      }
+
       const { data, error } = await admin.rpc("rewardloop_redeem_internal", {
         p_actor_user_id: user.id,
         p_reward_id: rewardId,
         p_request_key: requestKey,
       });
       if (error) return reply(500, { ok: false, error: "redemption_processing_failed" });
-      return reply(200, data && typeof data === "object" ? data : { ok: false, error: "unexpected_redemption_response" });
+      if (!data || typeof data !== "object") return reply(200, { ok: false, error: "unexpected_redemption_response" });
+
+      if (data.ok && data.redemption_id && isUpiReward && rawVpa && rewardData) {
+        const { data: partner } = await admin.from("partners")
+          .select("id, tenant_id")
+          .eq("user_id", user.id)
+          .eq("tenant_id", rewardData.tenant_id)
+          .maybeSingle();
+
+        if (partner) {
+          const amountInr = Math.max(1, Math.round((rewardData.points_cost || 500) / 10));
+
+          const { data: existingPayout } = await admin.from("upi_payout_queue")
+            .select("id, status, upi_vpa, amount_inr, utr_reference, created_at")
+            .eq("redemption_id", data.redemption_id)
+            .maybeSingle();
+
+          let payoutRecord = existingPayout;
+          if (!payoutRecord) {
+            const { data: insertedPayout } = await admin.from("upi_payout_queue").insert({
+              tenant_id: rewardData.tenant_id,
+              partner_id: partner.id,
+              redemption_id: data.redemption_id,
+              upi_vpa: rawVpa,
+              amount_inr: amountInr,
+              status: "pending",
+            }).select("id, status, upi_vpa, amount_inr, utr_reference, created_at").maybeSingle();
+            if (insertedPayout) payoutRecord = insertedPayout;
+          }
+
+          return reply(200, {
+            ...data,
+            category: "cash_upi",
+            queued: true,
+            payout_id: payoutRecord?.id || null,
+            payout_status: payoutRecord?.status || "pending",
+            upi_vpa: rawVpa,
+            amount_inr: amountInr,
+            utr: payoutRecord?.utr_reference || null,
+            message: "UPI payout queued. Bank UTR reference will update upon clearance.",
+          });
+        }
+      }
+
+      return reply(200, data);
     }
 
-    if (["admin_dashboard", "admin_audit_logs", "admin_record_export", "verify_partner", "issue_qr_batch", "revoke_qr_batch", "resolve_redemption", "set_campaign_status", "create_campaign", "set_point_value", "create_product", "set_product_status", "update_product"].includes(action)) {
+    if (action === "upi_payout_status") {
+      const redemptionId = typeof body.redemption_id === "string" ? body.redemption_id : "";
+      const payoutId = typeof body.payout_id === "string" ? body.payout_id : "";
+      if (!redemptionId && !payoutId) return reply(400, { ok: false, error: "missing_lookup_id" });
+
+      let query = admin.from("upi_payout_queue")
+        .select("id, redemption_id, partner_id, status, upi_vpa, amount_inr, utr_reference, created_at, processed_at");
+      if (payoutId) query = query.eq("id", payoutId);
+      else query = query.eq("redemption_id", redemptionId);
+
+      const { data: payout, error: pErr } = await query.maybeSingle();
+      if (pErr || !payout) return reply(404, { ok: false, error: "payout_not_found" });
+
+      return reply(200, { ok: true, payout });
+    }
+
+    if (["admin_dashboard", "admin_audit_logs", "admin_record_export", "verify_partner", "issue_qr_batch", "revoke_qr_batch", "resolve_redemption", "admin_upi_payouts", "set_campaign_status", "create_campaign", "set_point_value", "create_product", "set_product_status", "update_product"].includes(action)) {
       // Keep legacy callers working on the original tenant, but allow an explicit
       // tenant context only after checking active membership below.
       const requestedTenantSlug = typeof body.tenant_slug === "string" ? body.tenant_slug.trim() : TENANT_SLUG;
@@ -722,15 +800,29 @@ Deno.serve(async (req: Request) => {
           return reply(500, { ok: false, error: "admin_dashboard_metrics_failed" });
         }
 
+        const redemptionIds = redemptionRows.map(r => r.id);
+        const { data: payoutRows } = redemptionIds.length
+          ? await admin.from("upi_payout_queue")
+              .select("redemption_id, id, status, upi_vpa, amount_inr, utr_reference")
+              .in("redemption_id", redemptionIds)
+          : { data: [] };
+        const payoutByRedemptionId = new Map((payoutRows || []).map(p => [p.redemption_id, p]));
+
         const partnerById = new Map((redemptionPartners.data || []).map(p => [p.id, p]));
         const rewardById = new Map((redemptionRewards.data || []).map(r => [r.id, r]));
-        const enrichedRedemptions = redemptionRows.map(r => ({
-          ...r,
-          partner_name: partnerById.get(r.partner_id)?.display_name || "Partner",
-          partner_phone: partnerById.get(r.partner_id)?.phone_e164 || "",
-          reward_name: rewardById.get(r.reward_id)?.name || "Reward",
-          reward_is_demo: rewardById.get(r.reward_id)?.is_demo ?? false,
-        }));
+        const enrichedRedemptions = redemptionRows.map(r => {
+          const payout = payoutByRedemptionId.get(r.id);
+          return {
+            ...r,
+            partner_name: partnerById.get(r.partner_id)?.display_name || "Partner",
+            partner_phone: partnerById.get(r.partner_id)?.phone_e164 || "",
+            reward_name: rewardById.get(r.reward_id)?.name || "Reward",
+            reward_is_demo: rewardById.get(r.reward_id)?.is_demo ?? false,
+            payout_status: payout?.status || null,
+            payout_vpa: payout?.upi_vpa || null,
+            payout_utr: payout?.utr_reference || null,
+          };
+        });
 
         const pagination = Object.fromEntries(
           (Object.keys(pageSpecs) as (keyof typeof pageSpecs)[]).map(name => [
@@ -837,6 +929,16 @@ Deno.serve(async (req: Request) => {
         });
         if (error) return reply(500, { ok: false, error: "redemption_resolution_failed" });
         return reply(200, data && typeof data === "object" ? data : { ok: false, error: "unexpected_redemption_response" });
+      }
+      if (action === "admin_upi_payouts") {
+        const { data: payouts, error: pErr } = await admin.from("upi_payout_queue")
+          .select("id, partner_id, redemption_id, upi_vpa, amount_inr, status, razorpay_payout_id, utr_reference, attempts, created_at, processed_at")
+          .eq("tenant_id", tenant.id)
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (pErr) return reply(500, { ok: false, error: "admin_upi_payouts_failed" });
+        return reply(200, { ok: true, payouts: payouts || [] });
       }
     }
 

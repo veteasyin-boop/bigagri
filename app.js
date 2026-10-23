@@ -103,6 +103,18 @@ async function loadLuckyTickets(tenantId, partnerId) {
   } catch {}
   return getLuckyTickets();
 }
+async function loadPartnerPayouts(tenantId, partnerId) {
+  try {
+    const { data, error } = await supabase
+      .from("upi_payout_queue")
+      .select("id, redemption_id, status, upi_vpa, amount_inr, utr_reference, created_at, processed_at")
+      .eq("tenant_id", tenantId)
+      .eq("partner_id", partnerId)
+      .order("created_at", { ascending: false });
+    if (!error && Array.isArray(data)) return data;
+  } catch {}
+  return [];
+}
 async function migrateLegacyTickets() {
   const legacy = getLuckyTickets();
   if (!legacy || !legacy.length) return;
@@ -352,11 +364,12 @@ async function loadDashboard() {
     }
     state.rewards = loadedRewards;
     if (state.profile) {
-      const [ledgerRes, redemptionRes, balance, luckyTickets] = await Promise.all([
+      const [ledgerRes, redemptionRes, balance, luckyTickets, payouts] = await Promise.all([
         supabase.from("points_ledger").select("id,entry_type,points_delta,reason_code,created_at").eq("tenant_id", tenant.id).eq("partner_id", state.profile.id).order("created_at", { ascending: false }).limit(30),
         supabase.from("redemptions").select("id,reward_id,points_cost,status,created_at,fulfilled_at").eq("tenant_id", tenant.id).eq("partner_id", state.profile.id).order("created_at", { ascending: false }).limit(10),
         loadPointsBalance(tenant.id, state.profile.id),
-        loadLuckyTickets(tenant.id, state.profile.id)
+        loadLuckyTickets(tenant.id, state.profile.id),
+        loadPartnerPayouts(tenant.id, state.profile.id)
       ]);
       if (ledgerRes.error) throw ledgerRes.error;
       if (redemptionRes.error) throw redemptionRes.error;
@@ -364,8 +377,9 @@ async function loadDashboard() {
       state.redemptions = redemptionRes.data || [];
       state.balance = balance;
       state.luckyTickets = luckyTickets || [];
+      state.payouts = payouts || [];
       migrateLegacyTickets();
-    } else { state.ledger = []; state.redemptions = []; state.luckyTickets = []; state.balance = 0; }
+    } else { state.ledger = []; state.redemptions = []; state.luckyTickets = []; state.payouts = []; state.balance = 0; }
     render();
   } catch (error) {
     render();
@@ -546,8 +560,19 @@ function renderHistory() {
     return {created_at:item.created_at, sort: new Date(item.created_at).getTime(), html:`<div class="history-item"><div><div class="history-title">${esc(item.reason_code || item.entry_type || label)}</div><div class="history-sub">${new Date(item.created_at).toLocaleString(locale,{dateStyle:"medium",timeStyle:"short"})}</div></div><div class="delta ${delta >= 0 ? "plus" : "minus"}">${delta > 0 ? "+" : ""}${moneylessPoints(delta)}</div></div>`};
   });
   const redemptions = state.redemptions.map(item => {
+    const payout = (state.payouts || []).find(p => p.redemption_id === item.id);
     const statusLabel = ({reserved:t("redemptionReserved"),approved:t("redemptionApproved"),fulfilled:t("redemptionFulfilled"),cancelled:t("redemptionCancelled"),rejected:t("redemptionRejected")})[item.status] || item.status;
-    return {created_at:item.created_at,sort:new Date(item.created_at).getTime(),html:`<div class="history-item"><div><div class="history-title">${t("redeem")}</div><div class="history-sub">${new Date(item.created_at).toLocaleString(locale,{dateStyle:"medium",timeStyle:"short"})} · ${esc(statusLabel)}</div></div><div class="delta minus">−${moneylessPoints(item.points_cost)}</div></div>`};
+    let payoutDetail = "";
+    if (payout) {
+      if (payout.status === "paid" && payout.utr_reference) {
+        payoutDetail = ` · <span style="color:#15803d;font-weight:700;">₹${payout.amount_inr} UPI Paid (UTR: ${esc(payout.utr_reference)})</span>`;
+      } else if (payout.status === "processing" || payout.status === "pending") {
+        payoutDetail = ` · <span style="color:#d97706;font-weight:700;">₹${payout.amount_inr} UPI Queued ⏳</span>`;
+      } else if (payout.status === "failed") {
+        payoutDetail = ` · <span style="color:#b91c1c;font-weight:700;">UPI Payout Failed</span>`;
+      }
+    }
+    return {created_at:item.created_at,sort:new Date(item.created_at).getTime(),html:`<div class="history-item"><div><div class="history-title">${t("redeem")}</div><div class="history-sub">${new Date(item.created_at).toLocaleString(locale,{dateStyle:"medium",timeStyle:"short"})} · ${esc(statusLabel)}${payoutDetail}</div></div><div class="delta minus">−${moneylessPoints(item.points_cost)}</div></div>`};
   });
   return `<div class="history-list">${[...ledger,...redemptions].sort((x,y)=>y.sort-x.sort).slice(0,12).map(item=>item.html).join("")}</div>`;
 }
@@ -737,24 +762,31 @@ function showScratchCardModal({ pointsAdded, bonus, ticketNumber, prizeCampaign 
   });
 }
 
-function showUpiReceiptModal({ reward, vpa, utr, amount }) {
+function showUpiReceiptModal({ reward, vpa, utr, amount, status = "pending", payoutId = null }) {
+  const isPaid = status === "paid" && Boolean(utr);
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
   modal.innerHTML = `
     <div class="modal-card" role="dialog" aria-modal="true" style="text-align:center;">
-      <div class="upi-success-icon">✓</div>
-      <span class="upi-badge">⚡ NPCI UPI Instant IMPS</span>
-      <h3 class="modal-title" style="margin-top:10px;">${state.lang === "hi" ? "UPI नकद ट्रांसफर सफल!" : "UPI Cash Transfer Successful!"}</h3>
+      <div class="${isPaid ? "upi-success-icon" : "upi-queued-icon"}">${isPaid ? "✓" : "⏳"}</div>
+      <span class="upi-badge">⚡ NPCI UPI Instant Rail</span>
+      <h3 class="modal-title" style="margin-top:10px;">${isPaid
+        ? (state.lang === "hi" ? "UPI नकद ट्रांसफर सफल!" : "UPI Cash Transfer Settled!")
+        : (state.lang === "hi" ? "UPI पेआउट कतार में है!" : "UPI Payout Queued!")}</h3>
       <div class="upi-amount">₹${amount}</div>
-      <p class="muted small">${state.lang === "hi" ? `सीधे बैंक खाते में ट्रांसफर: ${esc(vpa)}` : `Directly credited to UPI ID: ${esc(vpa)}`}</p>
+      <p class="muted small">${state.lang === "hi" ? `सीधे बैंक खाते में ट्रांसफर: ${esc(vpa)}` : `Direct credit to UPI ID: ${esc(vpa)}`}</p>
       
       <div class="upi-receipt-box">
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">${state.lang === "hi" ? "बैंक संदर्भ संख्या (UTR Reference)" : "Bank UTR Reference Number"}</div>
-        <div class="upi-utr-mono">${esc(utr)}</div>
-        <div style="font-size:11px;color:#15803d;font-weight:700;">✓ ${state.lang === "hi" ? "राशि तुरंत खाते में जमा कर दी गई है" : "Settled & disbursed directly to beneficiary"}</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">${isPaid
+          ? (state.lang === "hi" ? "बैंक संदर्भ संख्या (UTR Reference)" : "Bank UTR Reference Number")
+          : (state.lang === "hi" ? "पेआउट ट्रैकिंग संदर्भ (Queue Reference)" : "Payout Tracking Reference")}</div>
+        <div class="upi-utr-mono">${esc(utr || (payoutId ? `QUEUE-${payoutId.slice(0, 8).toUpperCase()}` : "AUTO-SCHEDULED"))}</div>
+        <div style="font-size:11px;color:${isPaid ? "#15803d" : "#d97706"};font-weight:700;">${isPaid
+          ? (state.lang === "hi" ? "✓ राशि बैंक खाते में जमा कर दी गई है" : "✓ Settled & disbursed directly to beneficiary")
+          : (state.lang === "hi" ? "⏳ बैंक क्लीयरेंस 5–15 मिनट में आपके एक्टिविटी इतिहास में अपडेट हो जाएगी।" : "⏳ Bank clearance will be confirmed in your Activity History in 5–15 mins.")}</div>
       </div>
       
-      <button class="primary-button wide" id="modal-upi-done">${state.lang === "hi" ? "रसीद बंद करें" : "Done"}</button>
+      <button class="primary-button wide" id="modal-upi-done">${state.lang === "hi" ? "ठीक है" : "Done"}</button>
     </div>
   `;
   document.body.appendChild(modal);
@@ -838,14 +870,18 @@ async function redeemReward(rewardId) {
   const modalResult = await showRedemptionModal(reward);
   if (!modalResult || !modalResult.confirmed) return;
   try {
-    const result = await api("redeem", { reward_id: rewardId, request_key: crypto.randomUUID() });
+    const result = await (modalResult.upi_vpa
+      ? api("redeem", { reward_id: rewardId, request_key: crypto.randomUUID(), upi_vpa: modalResult.upi_vpa })
+      : api("redeem", { reward_id: rewardId, request_key: crypto.randomUUID() }));
     if (result.ok) {
-      if (reward.category === "cash_upi" || result.utr) {
+      if (reward.category === "cash_upi" || result.queued || result.utr) {
         showUpiReceiptModal({
           reward,
-          vpa: modalResult.upi_vpa || localStorage.getItem("growta-upi-vpa") || "UPI Bank Account",
-          utr: result.utr || ("UPI/" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "/UTR" + Math.floor(100000000 + Math.random() * 900000000)),
-          amount: Math.round(Number(reward.points_cost || 500) / 10)
+          vpa: modalResult.upi_vpa || result.upi_vpa || localStorage.getItem("growta-upi-vpa") || "UPI Bank Account",
+          utr: result.utr || null,
+          status: result.payout_status || (result.utr ? "paid" : "pending"),
+          payoutId: result.payout_id || null,
+          amount: result.amount_inr || Math.round(Number(reward.points_cost || 500) / 10)
         });
       } else {
         toast(t("redeemSuccess"), "success");
@@ -853,8 +889,10 @@ async function redeemReward(rewardId) {
       await loadDashboard();
     }
     else {
-      const key = result.error === "demo_reward_not_redeemable" ? "redeemDemo" : result.error === "insufficient_points" ? "insufficientPoints" : "redeemError";
-      toast(t(key), "error");
+      const key = result.error === "demo_reward_not_redeemable" ? "redeemDemo" :
+        result.error === "insufficient_points" ? "insufficientPoints" :
+        result.error === "invalid_upi_vpa" ? (state.lang === "hi" ? "अमान्य UPI ID" : "Invalid UPI ID") : "redeemError";
+      toast(t(key) || result.error, "error");
     }
   } catch (error) { toast(friendlyError(error, "redeemError"), "error"); }
 }

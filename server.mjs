@@ -559,9 +559,38 @@ const server = http.createServer(async (req, res) => {
 
       if (bodyJson.action === "redeem") {
         const { reward_id, request_key, upi_vpa } = bodyJson;
-        const utr = "UPI/" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "/UTR" + Math.floor(100000000 + Math.random() * 900000000);
+        const redemptionId = "red-" + crypto.randomUUID().slice(0, 8);
+        const payoutId = "pay-" + crypto.randomUUID().slice(0, 8);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
-        res.end(JSON.stringify({ ok: true, redemption_id: "red-" + crypto.randomUUID().slice(0, 8), utr, upi_vpa }));
+        res.end(JSON.stringify({
+          ok: true,
+          redemption_id: redemptionId,
+          queued: true,
+          payout_id: payoutId,
+          payout_status: "pending",
+          upi_vpa: upi_vpa || "kisan@upi",
+          amount_inr: 50,
+          utr: null,
+          message: "UPI payout queued. Bank UTR reference will update upon clearance."
+        }));
+        return;
+      }
+
+      if (bodyJson.action === "upi_payout_status") {
+        const { redemption_id, payout_id } = bodyJson;
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({
+          ok: true,
+          payout: {
+            id: payout_id || "pay-mock",
+            redemption_id: redemption_id || "red-mock",
+            status: "pending",
+            upi_vpa: "kisan@upi",
+            amount_inr: 50,
+            utr_reference: null,
+            created_at: new Date().toISOString()
+          }
+        }));
         return;
       }
 
