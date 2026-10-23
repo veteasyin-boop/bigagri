@@ -23,7 +23,7 @@ async function boot(){
     const s=result.settings;
     $("provider").value=s.email_provider||"gmail"; $("sender").value=s.sender_email||""; $("senderName").value=s.sender_name||"Growta RewardLoop";
     $("host").value=s.smtp_host||""; $("port").value=s.smtp_port||587; $("username").value=s.smtp_username||"";
-    $("siteUrl").value=s.site_url||"https://bigagri.vercel.app"; $("redirects").value=(s.redirect_urls||[]).join("\n");
+    $("siteUrl").value=s.site_url||(typeof window!=="undefined"&&window.location.origin?window.location.origin:"https://bigagri-pi.vercel.app"); $("redirects").value=(s.redirect_urls||[]).join("\n");
     $("signupEnabled").checked=s.signup_enabled!==false; $("emailConfirm").checked=s.email_confirmation_required!==false;
     $("confirmSubject").value=s.confirmation_subject||$("confirmSubject").value; $("confirmBody").value=s.confirmation_body||$("confirmBody").value;
     $("recoverySubject").value=s.recovery_subject||$("recoverySubject").value; $("recoveryBody").value=s.recovery_body||$("recoveryBody").value;

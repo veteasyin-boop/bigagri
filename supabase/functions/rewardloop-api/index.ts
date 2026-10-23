@@ -8,7 +8,10 @@ const TENANT_SLUG = "growta-rewardloop";
 const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 // Production is the only built-in browser origin. Add preview/custom origins
 // explicitly through ALLOWED_ORIGINS in Edge Function secrets.
-const DEFAULT_ALLOWED_ORIGINS = ["https://bigagri.vercel.app"];
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://bigagri.vercel.app",
+  "https://bigagri-pi.vercel.app",
+];
 const CONFIGURED_ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
   .split(",").map((origin) => origin.trim()).filter(Boolean);
 const ALLOWED_ORIGINS = new Set([

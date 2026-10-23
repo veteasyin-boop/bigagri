@@ -734,8 +734,8 @@ const server = http.createServer(async (req, res) => {
     delete headers.host;
     delete headers.connection;
     headers["host"] = SUPABASE_REMOTE_HOST;
-    headers["origin"] = "https://bigagri.vercel.app";
-    headers["referer"] = "https://bigagri.vercel.app/";
+    headers["origin"] = "https://bigagri-pi.vercel.app";
+    headers["referer"] = "https://bigagri-pi.vercel.app/";
     headers["content-length"] = Buffer.byteLength(bodyBuffer);
 
     const proxyReq = https.request(

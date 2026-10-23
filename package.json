@@ -2,7 +2,6 @@
   "name": "growta-rewardloop",
   "version": "1.0.0",
   "description": "Mobile-first, Hindi-first rewards PWA for farmers and agricultural partners",
-  "main": "server.mjs",
   "type": "module",
   "scripts": {
     "start": "node server.mjs",

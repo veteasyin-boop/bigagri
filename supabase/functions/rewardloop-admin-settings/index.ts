@@ -4,9 +4,27 @@ const URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PUBLIC = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
 const TENANT = "growta-rewardloop";
-const headers = {"Access-Control-Allow-Origin":"https://bigagri.vercel.app","Access-Control-Allow-Headers":"authorization, apikey, content-type, x-client-info","Access-Control-Allow-Methods":"POST, OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://bigagri.vercel.app",
+  "https://bigagri-pi.vercel.app",
+];
+const ALLOWED_ORIGINS = new Set([
+  ...DEFAULT_ALLOWED_ORIGINS,
+  ...(Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((v) => v.trim()).filter(Boolean),
+]);
+const corsHeaders = {
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store",
+};
+function respond(status: number, body: Record<string, unknown>, origin?: string | null) {
+  const h = new Headers(corsHeaders);
+  if (origin && ALLOWED_ORIGINS.has(origin)) h.set("Access-Control-Allow-Origin", origin);
+  return new Response(JSON.stringify(body), { status, headers: h });
+}
 const MAX_BODY_BYTES = 32 * 1024;
-const respond=(status:number,body:Record<string,unknown>)=>new Response(JSON.stringify(body),{status,headers});
 async function readLimitedJson(req:Request):Promise<{ok:true;value:unknown}|{ok:false;tooLarge:boolean}>{
  const length=Number(req.headers.get("content-length")??"0");
  if(Number.isFinite(length)&&length>MAX_BODY_BYTES)return {ok:false,tooLarge:true};
@@ -18,7 +36,17 @@ async function readLimitedJson(req:Request):Promise<{ok:true;value:unknown}|{ok:
  try{return {ok:true,value:JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes))};}catch{return {ok:false,tooLarge:false};}
 }
 Deno.serve(async(req:Request)=>{
- if(req.method==="OPTIONS") return new Response("ok",{headers});
+ const origin = req.headers.get("origin") || req.headers.get("Origin");
+ if(req.method==="OPTIONS") {
+   const h = new Headers(corsHeaders);
+   if (origin && ALLOWED_ORIGINS.has(origin)) h.set("Access-Control-Allow-Origin", origin);
+   return new Response("ok", { headers: h });
+ }
+ const respond = (status: number, body: Record<string, unknown>) => {
+   const h = new Headers(corsHeaders);
+   if (origin && ALLOWED_ORIGINS.has(origin)) h.set("Access-Control-Allow-Origin", origin);
+   return new Response(JSON.stringify(body), { status, headers: h });
+ };
  if(req.method!=="POST") return respond(405,{ok:false,error:"method_not_allowed"});
  try{
   const auth=req.headers.get("Authorization"); if(!auth?.startsWith("Bearer ")) return respond(401,{ok:false,error:"authentication_required"});

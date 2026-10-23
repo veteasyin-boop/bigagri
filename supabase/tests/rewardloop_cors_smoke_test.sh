@@ -4,7 +4,7 @@
 set -euo pipefail
 
 API_URL="${API_URL:-https://guhhuqxrobhuumwrypnc.supabase.co/functions/v1/rewardloop-api}"
-ALLOWED_ORIGIN="${ALLOWED_ORIGIN:-https://bigagri.vercel.app}"
+ALLOWED_ORIGIN="${ALLOWED_ORIGIN:-https://bigagri-pi.vercel.app}"
 BLOCKED_ORIGIN="${BLOCKED_ORIGIN:-https://untrusted-origin.invalid}"
 
 tmp="$(mktemp -d)"
