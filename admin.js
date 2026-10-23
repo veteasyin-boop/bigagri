@@ -166,7 +166,7 @@ if(sectionLinks.length){
 }
 document.getElementById("refresh").addEventListener("click",refresh);
 document.getElementById("download-qr-export")?.addEventListener("click",downloadPendingQrExport);
-document.getElementById("clear-qr-export")?.addEventListener("click",()=>{
+document.getElementById("clear-qr-export")?.addEventListener("click",async()=>{
   if(!pendingQrExport)return;
   const complete=pendingQrExport.complete===true;
   const description=complete
@@ -358,7 +358,7 @@ root.querySelector("#operator-invite")?.addEventListener("submit",async event=>{
   finally{if(form.isConnected)button.disabled=false}
 });
 root.querySelectorAll("[data-operator-revoke]").forEach(btn=>btn.addEventListener("click",async()=>{
-  if(!confirm("Revoke operator access? They will no longer be able to access the admin portal."))return;
+  if(!await confirmAdminAction({title:"Revoke operator access?",description:"They will no longer be able to access the admin portal.",confirmLabel:"Revoke access",danger:true}))return;
   btn.disabled=true;
   try{
     await call("revoke_operator",{operator_id:btn.dataset.operatorRevoke});
@@ -369,7 +369,7 @@ root.querySelectorAll("[data-operator-revoke]").forEach(btn=>btn.addEventListene
 }));
 root.querySelectorAll("[data-resolve-incident]").forEach(b=>b.addEventListener("click",async()=>{
   const incident_id=b.dataset.resolveIncident;
-  if(!confirm("Contain and blacklist this batch? This will mark the security dossier contained and prevent any further claims from this batch across all distribution nodes."))return;
+  if(!await confirmAdminAction({title:"Contain and blacklist batch?",description:"This will mark the security dossier contained and prevent any further claims from this batch across all distribution nodes.",confirmLabel:"Contain & blacklist",danger:true}))return;
   b.disabled=true;
   try{
     await call("resolve_counterfeit_incident",{incident_id,status:"contained"});
@@ -395,7 +395,7 @@ root.querySelector("#mes-key-create")?.addEventListener("submit",async e=>{
 });
 root.querySelectorAll("[data-revoke-mes]").forEach(b=>b.addEventListener("click",async()=>{
   const key_id=b.dataset.revokeMes;
-  if(!confirm("Revoke this factory line MES API key? Automated line printing using this key will immediately be rejected."))return;
+  if(!await confirmAdminAction({title:"Revoke MES API key?",description:"Automated line printing using this key will immediately be rejected.",confirmLabel:"Revoke key",danger:true}))return;
   b.disabled=true;
   try{
     await call("revoke_mes_key",{key_id});
