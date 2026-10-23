@@ -169,6 +169,8 @@ Deno.serve(async (req: Request) => {
     const ratePolicy: Record<string, { limit: number; windowSeconds: number }> = {
       profile: { limit: 30, windowSeconds: 60 },
       claim: { limit: 30, windowSeconds: 60 },
+      sync_lucky_ticket: { limit: 30, windowSeconds: 60 },
+      lucky_tickets: { limit: 60, windowSeconds: 60 },
       redeem: { limit: 15, windowSeconds: 60 },
       admin_dashboard: { limit: 60, windowSeconds: 60 },
       verify_partner: { limit: 30, windowSeconds: 60 },
@@ -293,6 +295,12 @@ Deno.serve(async (req: Request) => {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
         return reply(400, { ok: false, error: "invalid_request_id" });
       }
+
+      const isAssistedScan = body.is_assisted_scan === true;
+      const assistedFarmerPhone = typeof body.assisted_farmer_phone === "string"
+        ? body.assisted_farmer_phone.trim()
+        : "";
+
       const { data, error } = await admin.rpc("rewardloop_claim_qr_internal", {
         p_actor_user_id: user.id,
         p_token: token,
@@ -301,7 +309,161 @@ Deno.serve(async (req: Request) => {
         p_device_ref_hash: null,
       });
       if (error) return reply(500, { ok: false, error: "claim_processing_failed" });
-      return reply(200, data && typeof data === "object" ? data : { ok: false, error: "unexpected_claim_response" });
+      if (!data || typeof data !== "object") return reply(200, { ok: false, error: "unexpected_claim_response" });
+
+      const claimData = data as Record<string, unknown>;
+      if (claimData.ok === true && claimData.outcome === "accepted" && claimData.claim_id) {
+        try {
+          const { data: claimRow } = await admin.from("claims")
+            .select("id, tenant_id, partner_id, qr_code_id, campaign_id, campaigns(name)")
+            .eq("id", claimData.claim_id)
+            .maybeSingle();
+
+          let ticketNumber = "";
+          let prizeCampaign = "Rabi 2026 Tractor & Sprayer Mega Lucky Draw";
+
+          if (claimRow) {
+            const campaignName = (claimRow.campaigns as { name?: string } | null)?.name || prizeCampaign;
+            prizeCampaign = campaignName;
+
+            // Check if ticket already exists for this qr_code_id (e.g. claim replay)
+            const { data: existingTicket } = await admin.from("lucky_draw_tickets")
+              .select("ticket_number, campaign_ref")
+              .eq("tenant_id", claimRow.tenant_id)
+              .eq("qr_code_id", claimRow.qr_code_id)
+              .maybeSingle();
+
+            if (existingTicket) {
+              ticketNumber = existingTicket.ticket_number;
+              prizeCampaign = existingTicket.campaign_ref;
+            } else {
+              // Generate unique lucky draw coupon number
+              const ticketSeq = Math.floor(10000 + Math.random() * 90000);
+              const generatedNumber = `RABI-2026-${ticketSeq}`;
+              const { data: createdTicket } = await admin.from("lucky_draw_tickets").insert({
+                tenant_id: claimRow.tenant_id,
+                partner_id: claimRow.partner_id,
+                qr_code_id: claimRow.qr_code_id,
+                ticket_number: generatedNumber,
+                campaign_ref: campaignName,
+                draw_date: "2026-12-31",
+                status: "active",
+              }).select("ticket_number, campaign_ref").maybeSingle();
+
+              ticketNumber = createdTicket?.ticket_number || generatedNumber;
+              prizeCampaign = createdTicket?.campaign_ref || campaignName;
+            }
+
+            // Module 7: Handle assisted scan margin for dealer / Kendra
+            if (isAssistedScan && assistedFarmerPhone) {
+              try {
+                let { data: farmerPartner } = await admin.from("partners")
+                  .select("id")
+                  .eq("tenant_id", claimRow.tenant_id)
+                  .eq("phone_e164", assistedFarmerPhone)
+                  .maybeSingle();
+
+                if (!farmerPartner && /^\+[1-9]\d{6,14}$/.test(assistedFarmerPhone)) {
+                  const { data: newFarmer } = await admin.from("partners").insert({
+                    tenant_id: claimRow.tenant_id,
+                    role: "farmer",
+                    display_name: `Farmer ${assistedFarmerPhone.slice(-4)}`,
+                    phone_e164: assistedFarmerPhone,
+                    verification_status: "verified",
+                    external_ref: `assisted_by:${claimRow.partner_id}`,
+                  }).select("id").maybeSingle();
+                  farmerPartner = newFarmer;
+                }
+
+                // Credit dealer Kendra margin (50 points = ₹50 trade margin)
+                const dealerMarginKey = `dealer_margin:${requestId}`;
+                await admin.from("points_ledger").insert({
+                  tenant_id: claimRow.tenant_id,
+                  partner_id: claimRow.partner_id,
+                  claim_id: claimRow.id,
+                  entry_type: "earn",
+                  points_delta: 50,
+                  idempotency_key: dealerMarginKey,
+                  reason_code: "assisted_scan_dealer_margin",
+                  actor_user_id: user.id,
+                });
+
+                await admin.from("audit_logs").insert({
+                  tenant_id: claimRow.tenant_id,
+                  actor_user_id: user.id,
+                  action: "assisted_scan_completed",
+                  entity_type: "claim",
+                  entity_id: claimRow.id,
+                  request_id: requestId,
+                  after_data: {
+                    assisted_farmer_phone: assistedFarmerPhone,
+                    farmer_partner_id: farmerPartner?.id || null,
+                    dealer_partner_id: claimRow.partner_id,
+                  },
+                });
+              } catch {
+                // Non-blocking margin credit failure
+              }
+            }
+          }
+
+          const bonusPoints = Math.floor(10 + Math.random() * 15);
+          return reply(200, {
+            ...claimData,
+            ticket_number: ticketNumber || `RABI-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+            prize_campaign: prizeCampaign,
+            bonus_points: bonusPoints,
+            points_added: Number(claimData.points_awarded || 50),
+            is_assisted_scan: isAssistedScan,
+          });
+        } catch {
+          return reply(200, claimData);
+        }
+      }
+
+      return reply(200, claimData);
+    }
+
+    if (action === "sync_lucky_ticket") {
+      const ticketNum = typeof body.ticket_number === "string" ? body.ticket_number.trim() : "";
+      const campRef = typeof body.campaign_ref === "string" ? body.campaign_ref.trim() : "Rabi 2026 Tractor Draw";
+      if (!ticketNum || ticketNum.length > 64) return reply(400, { ok: false, error: "invalid_ticket" });
+
+      const { data: partner } = await admin.from("partners")
+        .select("id, tenant_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!partner) return reply(404, { ok: false, error: "partner_not_found" });
+
+      const { error: insertErr } = await admin.from("lucky_draw_tickets").insert({
+        tenant_id: partner.tenant_id,
+        partner_id: partner.id,
+        ticket_number: ticketNum,
+        campaign_ref: campRef,
+        draw_date: "2026-12-31",
+        status: "active",
+      });
+
+      return reply(200, { ok: true, synced: !insertErr });
+    }
+
+    if (action === "lucky_tickets") {
+      const { data: partner } = await admin.from("partners")
+        .select("id, tenant_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!partner) return reply(200, { ok: true, tickets: [] });
+
+      const { data: tickets, error: ticketErr } = await admin.from("lucky_draw_tickets")
+        .select("id, ticket_number, campaign_ref, draw_date, status, created_at")
+        .eq("tenant_id", partner.tenant_id)
+        .eq("partner_id", partner.id)
+        .order("created_at", { ascending: false });
+
+      if (ticketErr) return reply(500, { ok: false, error: "lucky_tickets_load_failed" });
+      return reply(200, { ok: true, tickets: tickets || [] });
     }
 
     if (action === "redeem") {

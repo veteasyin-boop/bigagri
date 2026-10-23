@@ -91,8 +91,36 @@ function saveLuckyTicket(item) {
   tickets.unshift(item);
   localStorage.setItem(LUCKY_TICKETS_KEY, JSON.stringify(tickets));
 }
+async function loadLuckyTickets(tenantId, partnerId) {
+  try {
+    const { data, error } = await supabase
+      .from("lucky_draw_tickets")
+      .select("ticket_number,campaign_ref,draw_date,created_at,status")
+      .eq("tenant_id", tenantId)
+      .eq("partner_id", partnerId)
+      .order("created_at", { ascending: false });
+    if (!error && Array.isArray(data)) return data;
+  } catch {}
+  return getLuckyTickets();
+}
+async function migrateLegacyTickets() {
+  const legacy = getLuckyTickets();
+  if (!legacy || !legacy.length) return;
+  try {
+    for (const t of legacy) {
+      const ticketNum = t.ticket || t.ticket_number;
+      if (ticketNum) {
+        await api("sync_lucky_ticket", {
+          ticket_number: ticketNum,
+          campaign_ref: t.campaign || t.campaign_ref || "Rabi 2026 Tractor Draw"
+        });
+      }
+    }
+    localStorage.removeItem(LUCKY_TICKETS_KEY);
+  } catch {}
+}
 function renderLuckyTicketsSection() {
-  const tickets = getLuckyTickets();
+  const tickets = (state.luckyTickets && state.luckyTickets.length) ? state.luckyTickets : getLuckyTickets();
   return `<section class="lucky-banner">
     <div class="lucky-banner-info">
       <div style="font-size:11px;font-weight:800;color:#fef08a;text-transform:uppercase;letter-spacing:.08em;">🌾 ${state.lang === "hi" ? "मौसमी बंपर लकी ड्रा 2026" : "Seasonal Bumper Lucky Draw 2026"}</div>
@@ -107,15 +135,18 @@ function renderLuckyTicketsSection() {
       <div style="margin-top:14px;">
         <span class="lucky-ticket-badge">🎟️ ${tickets.length} ${state.lang === "hi" ? "कूपन टिकट आपके पास हैं" : "Tickets Active"}</span>
       </div>
-      ${tickets.length ? `<div style="max-height:160px;overflow-y:auto;margin-top:10px;">${tickets.slice(0, 5).map(tk => `
+      ${tickets.length ? `<div style="max-height:160px;overflow-y:auto;margin-top:10px;">${tickets.slice(0, 5).map(tk => {
+        const num = tk.ticket_number || tk.ticket;
+        const dt = tk.created_at || tk.date || new Date().toISOString();
+        return `
         <div class="lucky-ticket-card">
           <div>
-            <div class="lucky-ticket-code">${esc(tk.ticket)}</div>
-            <div class="lucky-ticket-meta">${new Date(tk.date).toLocaleDateString(state.lang === "hi" ? "hi-IN" : "en-IN")} · +${esc(tk.bonus || 10)} Bonus Pts</div>
+            <div class="lucky-ticket-code">${esc(num)}</div>
+            <div class="lucky-ticket-meta">${new Date(dt).toLocaleDateString(state.lang === "hi" ? "hi-IN" : "en-IN")} · +${esc(tk.bonus || 10)} Bonus Pts</div>
           </div>
           <span class="lucky-ticket-badge">✓ Eligible</span>
-        </div>
-      `).join("")}</div>` : ""}
+        </div>`;
+      }).join("")}</div>` : ""}
     </div>
   </section>`;
 }
@@ -161,7 +192,7 @@ function renderReferralCard() {
   </section>`;
 }
 
-const state = { lang: localStorage.getItem("growta-lang") || "hi", session: null, tenant: null, profile: null, rewards: [], ledger: [], redemptions: [], balance: 0, view: "home", authMode: "signin", cameraStream: null, scanFrame: null, barcodeDetector: null, busy: false };
+const state = { lang: localStorage.getItem("growta-lang") || "hi", session: null, tenant: null, profile: null, rewards: [], ledger: [], redemptions: [], luckyTickets: [], balance: 0, view: "home", authMode: "signin", cameraStream: null, scanFrame: null, barcodeDetector: null, busy: false };
 if (new URLSearchParams(window.location.search).get("auth") === "reset") state.authMode = "reset";
 const app = document.getElementById("app");
 const pill = document.getElementById("connection-pill");
@@ -321,17 +352,20 @@ async function loadDashboard() {
     }
     state.rewards = loadedRewards;
     if (state.profile) {
-      const [ledgerRes, redemptionRes, balance] = await Promise.all([
+      const [ledgerRes, redemptionRes, balance, luckyTickets] = await Promise.all([
         supabase.from("points_ledger").select("id,entry_type,points_delta,reason_code,created_at").eq("tenant_id", tenant.id).eq("partner_id", state.profile.id).order("created_at", { ascending: false }).limit(30),
         supabase.from("redemptions").select("id,reward_id,points_cost,status,created_at,fulfilled_at").eq("tenant_id", tenant.id).eq("partner_id", state.profile.id).order("created_at", { ascending: false }).limit(10),
-        loadPointsBalance(tenant.id, state.profile.id)
+        loadPointsBalance(tenant.id, state.profile.id),
+        loadLuckyTickets(tenant.id, state.profile.id)
       ]);
       if (ledgerRes.error) throw ledgerRes.error;
       if (redemptionRes.error) throw redemptionRes.error;
       state.ledger = ledgerRes.data || [];
       state.redemptions = redemptionRes.data || [];
       state.balance = balance;
-    } else { state.ledger = []; state.redemptions = []; state.balance = 0; }
+      state.luckyTickets = luckyTickets || [];
+      migrateLegacyTickets();
+    } else { state.ledger = []; state.redemptions = []; state.luckyTickets = []; state.balance = 0; }
     render();
   } catch (error) {
     render();
@@ -620,7 +654,12 @@ async function claimQr(event) {
   }
   button.disabled = true; button.textContent = t("loading");
   try {
-    const result = await api("claim", { token, request_id: crypto.randomUUID() });
+    const claimPayload = {
+      token,
+      request_id: crypto.randomUUID(),
+      ...(isAssistedScan && lastFarmerPhone ? { assisted_farmer_phone: lastFarmerPhone, is_assisted_scan: true } : {})
+    };
+    const result = await api("claim", claimPayload);
     if (result.ok && result.outcome === "accepted") {
       const bonus = Number(result.bonus_points || Math.floor(5 + Math.random() * 20));
       const pointsAdded = Number(result.points_added || 50);

@@ -13,9 +13,11 @@ test("farmer onboarding sends fields accepted by the API", () => {
 });
 
 test("QR claim sends server-required token and request id", () => {
-  assert.match(client, /api\("claim",\s*\{\s*token,\s*request_id:\s*crypto\.randomUUID\(\)\s*\}\)/);
+  assert.match(client, /api\("claim",\s*claimPayload\)/);
+  assert.match(client, /assisted_farmer_phone:\s*lastFarmerPhone/);
   assert.match(api, /body\.token/);
   assert.match(api, /body\.request_id/);
+  assert.match(api, /body\.assisted_farmer_phone/);
   assert.match(api, /rewardloop_claim_qr_internal/);
 });
 
