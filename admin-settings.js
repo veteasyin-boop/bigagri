@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
-const supabase = createClient("https://guhhuqxrobhuumwrypnc.supabase.co","sb_publishable_6dr2KACqmGBM2AWZS6NTDw_1Kf3e8ru",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const SUPABASE_REMOTE_URL = "https://guhhuqxrobhuumwrypnc.supabase.co";
+const SUPABASE_URL = (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"))
+  ? window.location.origin + "/supabase-proxy"
+  : SUPABASE_REMOTE_URL;
+const supabase = createClient(SUPABASE_URL,"sb_publishable_6dr2KACqmGBM2AWZS6NTDw_1Kf3e8ru",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $ = id => document.getElementById(id);
 const status = (message, bad=false) => { $("status").textContent=message; $("status").style.background=bad?"#fff0ed":"#f2f5f2"; };
 let session=null;

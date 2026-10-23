@@ -7,3 +7,72 @@
 
 /* Accessibility utility used by the RewardLoop shell. */
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Loyalty Slabs & Points Breakdown */
+.slab-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:20px;box-shadow:0 4px 16px #173d2b06}
+.slab-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.slab-badge{display:inline-flex;align-items:center;gap:6px;background:#eef6ef;color:var(--green);font-weight:800;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid #d5e8d8}
+.slab-meter{height:10px;background:#edf2ec;border-radius:999px;overflow:hidden;margin:10px 0}
+.slab-fill{height:100%;background:linear-gradient(90deg,#24583b,#528663);border-radius:999px;transition:width .4s ease}
+.slab-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:600}
+.reward-card-progress{height:4px;background:#edf0ea;border-radius:999px;overflow:hidden;margin:8px 0}
+.reward-card-fill{height:100%;background:#528663;border-radius:999px}
+.points-remaining-preview{font-size:11px;color:#287445;font-weight:700;margin-top:6px}
+.points-needed-tag{font-size:11px;color:#9b4412;background:#fef3c7;padding:3px 7px;border-radius:6px;font-weight:700}
+
+/* Interactive Redemption Confirmation Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(18,34,24,.65);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px;animation:slidein .2s ease}
+.modal-card{background:#fff;border-radius:22px;max-width:480px;width:100%;padding:26px;box-shadow:0 24px 50px rgba(0,0,0,.25);position:relative}
+.modal-title{font-size:20px;color:var(--green);margin:0 0 8px;letter-spacing:-.03em}
+.calc-table{background:#f8faf6;border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0;display:grid;gap:8px;font-size:13px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;color:var(--muted)}
+.calc-row.total{border-top:1px dashed #d5e0d2;padding-top:8px;margin-top:4px;color:var(--green);font-weight:800;font-size:15px}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+
+/* Gamified Scratch Card & Lucky Draw Tickets */
+.scratch-card-box{position:relative;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px dashed #f59e0b;border-radius:18px;padding:24px;text-align:center;margin:18px 0;cursor:pointer;user-select:none;overflow:hidden;box-shadow:0 8px 24px rgba(245,158,11,.15);transition:transform .2s ease}
+.scratch-card-box:hover{transform:scale(1.02)}
+.scratch-overlay{position:absolute;inset:0;background:linear-gradient(135deg,#d97706,#b45309);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;gap:8px;transition:opacity .35s ease,visibility .35s;z-index:2}
+.scratch-overlay.revealed{opacity:0;visibility:hidden;pointer-events:none}
+.scratch-coin{width:46px;height:46px;border-radius:50%;background:#fef08a;color:#78350f;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 0 4px #fbbf24;animation:pulseCoin 1.5s infinite}
+@keyframes pulseCoin{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.scratch-reward-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#b45309}
+.scratch-reward-bonus{font-size:32px;font-weight:800;color:#15803d;margin:6px 0;letter-spacing:-.03em}
+
+/* Lucky Draw Ticket Banner & Ticket Card */
+.lucky-banner{background:linear-gradient(135deg,#1e3a2b,#14532d);color:#fff;border-radius:18px;padding:18px;margin-bottom:20px;border:1px solid #166534;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(20,83,45,.15)}
+.lucky-banner-info h4{margin:0 0 4px;font-size:15px;color:#fef08a;letter-spacing:-.02em}
+.lucky-banner-info p{margin:0;font-size:12px;color:#dcfce7;line-height:1.4}
+.lucky-ticket-card{background:#fff;border:1px dashed #22c55e;border-radius:14px;padding:14px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;position:relative;background-color:#f0fdf4}
+.lucky-ticket-code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:16px;font-weight:800;color:#166534;letter-spacing:.05em}
+.lucky-ticket-meta{font-size:11px;color:#15803d;margin-top:2px}
+.lucky-ticket-badge{background:#dcfce7;color:#166534;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;border:1px solid #86efac}
+.bumper-prizes-pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.bumper-prizes-pill-row span{background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px}
+
+/* Instant UPI Direct Transfer Modal & Receipt */
+.upi-badge{display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0284c7;font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px;border:1px solid #bae6fd}
+.upi-receipt-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin:16px 0;text-align:center}
+.upi-success-icon{width:54px;height:54px;border-radius:50%;background:#dcfce7;color:#15803d;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px;border:2px solid #86efac}
+.upi-amount{font-size:32px;font-weight:800;color:#0f172a;letter-spacing:-.03em;margin:4px 0}
+.upi-utr-mono{font-family:ui-monospace,SFMono-Regular,monospace;background:#f1f5f9;border:1px solid #cbd5e1;padding:8px 12px;border-radius:8px;font-size:12px;color:#334155;margin:12px 0;display:inline-block;word-break:break-all}
+
+/* Dual-Layer QR & Retailer Assisted Scan Mode */
+.dual-scan-tabs{display:flex;background:#edf3e9;padding:4px;border-radius:12px;gap:6px;margin-bottom:14px}
+.dual-scan-tab{flex:1;border:0;background:transparent;padding:9px 12px;border-radius:9px;font-weight:700;font-size:12px;color:var(--muted);transition:all .2s ease}
+.dual-scan-tab.active{background:#fff;color:var(--green);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.assisted-scan-box{background:#f0fdf4;border:1px dashed #22c55e;border-radius:14px;padding:14px;margin-bottom:14px}
+.assisted-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.assisted-title{font-size:13px;font-weight:800;color:#15803d;display:flex;align-items:center;gap:6px}
+
+/* Kisan Mitr Viral Referral Engine */
+.referral-card{background:linear-gradient(135deg,#fffdf7,#fef9ee);border:1px solid #fef08a;border-radius:18px;padding:20px;margin-top:20px;box-shadow:0 4px 16px rgba(245,158,11,.08)}
+.referral-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.referral-code-pill{font-family:ui-monospace,SFMono-Regular,monospace;font-size:16px;font-weight:800;background:#fef08a;color:#854d0e;padding:6px 14px;border-radius:999px;border:1px solid #fde047;letter-spacing:.05em}
+.whatsapp-btn{background:#25d366;color:#fff;border:0;border-radius:12px;padding:10px 16px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:transform .15s}
+.whatsapp-btn:hover{background:#20ba5a;transform:translateY(-1px)}
+.voice-toggle-btn{background:#edf2ec;color:var(--green);border:1px solid #d5e2d4;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.voice-toggle-btn.active{background:#dcfce7;color:#15803d;border-color:#86efac}
+
+
+

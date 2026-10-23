@@ -1,0 +1,28 @@
+{
+  "name": "growta-rewardloop",
+  "version": "1.0.0",
+  "description": "Mobile-first, Hindi-first rewards PWA for farmers and agricultural partners",
+  "main": "server.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "lint": "node --check app.js admin.js admin-settings.js admin-billing.js sw.js server.mjs",
+    "test": "node --test supabase/tests/*.test.mjs",
+    "check": "npm run lint && npm test",
+    "verify": "node scripts/verify-production-readiness.mjs"
+  },
+  "keywords": [
+    "pwa",
+    "loyalty",
+    "rewards",
+    "agriculture",
+    "supabase",
+    "growta"
+  ],
+  "author": "Growta",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

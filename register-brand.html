@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#173d2b">
+  <title>Register Agricultural Brand · Growta BigAgri</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/admin.html">
+        <span class="brand-mark">G</span>
+        <span><b>bigagri</b><small>BRAND ONBOARDING</small></span>
+      </a>
+      <div class="top-actions">
+        <a class="ghost-button" href="/admin.html">Sign in to existing brand ↗</a>
+        <a class="ghost-button" href="/">Farmer portal ↗</a>
+      </div>
+    </header>
+
+    <main class="main-content" style="max-width:840px;margin:32px auto;padding:0 18px">
+      <section class="panel admin-panel">
+        <div class="eyebrow">ENTERPRISE SAAS · MULTI-TENANCY</div>
+        <h1 style="color:var(--green);font-size:clamp(24px,3vw,34px);margin:6px 0 12px">Register your agricultural brand</h1>
+        <p class="muted">Provision an isolated, audited rewards and QR traceability workspace for your company. Your tenant catalog, points ledger, and campaigns remain completely private.</p>
+
+        <form id="brand-register-form" class="admin-form" style="margin-top:24px">
+          <div class="field wide-field">
+            <label for="company-name">Company / brand legal name</label>
+            <input id="company-name" name="companyName" required placeholder="e.g. Mahyco Seeds &amp; Crop Care Pvt Ltd">
+          </div>
+
+          <div class="field">
+            <label for="tenant-slug">Workspace subdomain / slug</label>
+            <input id="tenant-slug" name="tenantSlug" required pattern="^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$" placeholder="e.g. mahyco-seeds">
+            <span class="small muted" style="display:block;margin-top:4px">Used for routing: https://bigagri.vercel.app/?tenant=<strong>slug</strong></span>
+          </div>
+
+          <div class="field">
+            <label for="company-gstin">Company GSTIN (15-digit)</label>
+            <input id="company-gstin" name="gstin" required maxlength="15" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" placeholder="27AABCM1234F1Z9">
+          </div>
+
+          <div class="field">
+            <label for="admin-name">Primary brand administrator name</label>
+            <input id="admin-name" name="adminName" required placeholder="e.g. Rajesh Patil">
+          </div>
+
+          <div class="field">
+            <label for="admin-email">Business email address</label>
+            <input id="admin-email" name="adminEmail" type="email" required placeholder="rajesh@mahyco.com">
+          </div>
+
+          <div class="field">
+            <label for="admin-password">Password (8+ characters)</label>
+            <input id="admin-password" name="adminPassword" type="password" required minlength="8" autocomplete="new-password">
+          </div>
+
+          <div class="field">
+            <label for="selected-plan">Subscription plan tier</label>
+            <select id="selected-plan" name="plan">
+              <option value="starter">Agri Retailer Starter — ₹1,999/mo (14-day trial)</option>
+              <option value="scale" selected>Agri Scale &amp; Growth — ₹4,999/mo (14-day trial)</option>
+              <option value="enterprise">Enterprise Manufacturer — ₹9,999/mo (30-day trial)</option>
+            </select>
+          </div>
+
+          <div class="field wide-field" style="margin-top:12px">
+            <button type="submit" id="btn-provision" class="primary-button wide">Provision isolated brand workspace</button>
+          </div>
+        </form>
+
+        <div id="register-status" style="margin-top:16px;display:none" class="alert"></div>
+      </section>
+
+      <section class="panel admin-panel" style="margin-top:20px">
+        <h2>Enterprise security &amp; isolation guarantees</h2>
+        <div class="quota-grid">
+          <div class="quota-card">
+            <div class="quota-header"><span>PostgreSQL Row-Level Security</span></div>
+            <p class="history-sub">Each brand's farmers, scan tokens, and points ledger are strictly partitioned by tenant ID.</p>
+          </div>
+          <div class="quota-card">
+            <div class="quota-header"><span>Dedicated Audit Trail</span></div>
+            <p class="history-sub">Every QR batch issuance, partner verification, and reward redemption is logged with user IDs.</p>
+          </div>
+          <div class="quota-card">
+            <div class="quota-header"><span>Indian GST Compliance</span></div>
+            <p class="history-sub">Automated monthly invoices with SAC 998313 and input tax credit (ITC) records.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>BigAgri · Multi-Tenant Agricultural Loyalty SaaS</span>
+      <span>Enterprise Data Protection</span>
+    </footer>
+  </div>
+
+  <div id="brand-toast" class="toast-region" role="status" aria-live="polite"></div>
+  <script type="module" src="/register-brand.js"></script>
+</body>
+</html>
