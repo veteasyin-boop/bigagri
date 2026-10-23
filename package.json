@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "build": "echo 'Static build ready'",
-    "start": "node server.mjs",
     "dev": "node server.mjs",
     "lint": "node --check app.js admin.js admin-settings.js admin-billing.js sw.js server.mjs",
     "test": "node --test supabase/tests/*.test.mjs",
